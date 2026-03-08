@@ -16,15 +16,17 @@ This skill solves the problem by **externalizing agent knowledge to a local Obsi
 - **Evolving**: append-only design means knowledge accumulates over time — agents build on previous sessions rather than repeating work
 
 ```
-┌─────────┐  ┌─────────┐  ┌─────────┐
-│ Agent A  │  │ Agent B  │  │ Agent C  │   Each agent has isolated memory
-└────┬─────┘  └────┬─────┘  └────┬─────┘
-     │write        │read+write   │read
-     ▼             ▼             ▼
-┌──────────────────────────────────────┐
-│         Obsidian Vault (local)       │   Shared, persistent, structured
-│  Index -> Summary -> Detail          │
-└──────────────────────────────────────┘
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│  Agent A  │  │  Agent B  │  │  Agent C  │
+└─────┬────┘  └─────┬────┘  └─────┬────┘
+      │              │              │
+    write       read/write        read
+      │              │              │
+      ▼              ▼              ▼
+┌──────────────────────────────────────────┐
+│          Obsidian Vault (local)           │
+│    Index  ──>  Summary  ──>  Detail      │
+└──────────────────────────────────────────┘
 ```
 
 In practice: after a deep debugging session, one agent archives its findings. Days later, a different agent working on a related issue reads the Index, finds the relevant topic, and picks up exactly where the first agent left off — no repeated analysis, no lost context.
@@ -35,21 +37,24 @@ In practice: after a deep debugging session, one agent archives its findings. Da
 - **Append-only**: never overwrites or skips — same topic, same day, similar content all get appended
 - **Same-day collision safe**: auto-increments filename (`topic-date-2.md`, `-3.md`, ...)
 - **Agent-friendly Index**: each topic shows type/conclusion/date for quick retrieval
-- **Customizable templates**: edit `templates/*.md` to match your vault style
+- **Customizable templates**: edit `obsidian-note/templates/*.md` to match your vault style
 - **Zero dependencies**: Python 3.6+ standard library only
 
 ## Quick Start
 
 ```bash
 # 1. Clone
-git clone https://github.com/agoodboywlb/-pensieve-obsidian-skill.git
-cd -pensieve-obsidian-skill
+git clone https://github.com/agoodboywlb/pensieve-obsidian-skill.git
+cd pensieve-obsidian-skill
 
-# 2. Set your vault path (recommended)
+# 2. Install skill (copy to Claude Code skills path)
+cp -r obsidian-note ~/.claude/skills/
+
+# 3. Set your vault path (recommended)
 export OBSIDIAN_VAULT=~/ObsidianVault
 
-# 3. Run
-python create_obsidian_note.py \
+# 4. Run
+python obsidian-note/create_obsidian_note.py \
   --project MyProject \
   --topic Sprint-Review \
   --task-type meeting \
@@ -57,6 +62,22 @@ python create_obsidian_note.py \
   --outcomes "- OAuth2 PKCE flow implemented\n- Token refresh tested" \
   --analysis "Compared session vs JWT, chose JWT for stateless scaling..." \
   --todos "- [ ] Write migration guide\n- [ ] Update API docs"
+```
+
+## Project Structure
+
+```
+pensieve-obsidian-skill/
+├── README.md
+├── README.zh-CN.md
+├── LICENSE
+└── obsidian-note/                  <- Skill directory (copy to ~/.claude/skills/)
+    ├── SKILL.md
+    ├── create_obsidian_note.py
+    └── templates/
+        ├── Index.md
+        ├── L1-Summary.md
+        └── L2-Detail.md
 ```
 
 ## Generated Structure
@@ -173,19 +194,23 @@ This avoids scanning every file in the vault.
 
 ## Customizing Templates
 
-Edit files in `templates/` to change note structure, frontmatter fields, or tag conventions.
+Edit files in `obsidian-note/templates/` to change note structure, frontmatter fields, or tag conventions.
 
 | Template | Purpose |
 |----------|---------|
-| `templates/Index.md` | Project index skeleton |
-| `templates/L1-Summary.md` | Topic summary skeleton |
-| `templates/L2-Detail.md` | Detail note with frontmatter and sections |
+| `obsidian-note/templates/Index.md` | Project index skeleton |
+| `obsidian-note/templates/L1-Summary.md` | Topic summary skeleton |
+| `obsidian-note/templates/L2-Detail.md` | Detail note with frontmatter and sections |
 
 Placeholders use `{{variable_name}}` syntax. Month grouping and append logic are handled by the script, not templates.
 
 ## Use as Claude Code Skill
 
-Copy this directory into your Claude Code skills path. Triggered by keywords: `obsidian`, `knowledge card`, `archive note`.
+```bash
+cp -r obsidian-note ~/.claude/skills/
+```
+
+The skill will be triggered by keywords: `obsidian`, `knowledge card`, `archive note`.
 
 ## License
 
