@@ -50,3 +50,20 @@ Templates in `templates/` can be freely customized:
 ## 4. Cross-Agent Memory
 
 Index.md doubles as the cross-agent memory file. After each archive, append an `## Open Action Items` section at the bottom of Index.md, aggregating uncompleted todos from the latest Detail of each topic. Any agent can read Index.md to get both the knowledge map and pending tasks in a single file read.
+
+## 5. How to Archive (IMPORTANT)
+
+**Always use the script** — do NOT manually create files with Write/Edit tools. One command generates all three layers + aggregates action items:
+
+```bash
+python3 ~/.claude/skills/obsidian-note/create_obsidian_note.py \
+  --project "{project}" \
+  --topic "{topic}" \
+  --task-type "{type}" \
+  --conclusion "{one-line summary}" \
+  --outcomes "{bullet list of key outcomes}" \
+  --analysis "{detailed analysis}" \
+  --todos "{markdown checklist of action items}"
+```
+
+Vault path is read from `OBSIDIAN_VAULT` env var. If not set, add `--vault {path}`.
