@@ -17,14 +17,14 @@ This skill solves the problem by **externalizing agent knowledge to a local Obsi
 
 ```
 ┌──────────┐  ┌──────────┐  ┌──────────┐
-│  Agent A  │  │  Agent B  │  │  Agent C  │
+│  Agent A │  │  Agent B │  │  Agent C │
 └─────┬────┘  └─────┬────┘  └─────┬────┘
-      │              │              │
-    write       read/write        read
-      │              │              │
-      ▼              ▼              ▼
+      │             │             │
+    write      read/write       read
+      │             │             │
+      ▼             ▼             ▼
 ┌──────────────────────────────────────────┐
-│          Obsidian Vault (local)           │
+│          Obsidian Vault (local)          │
 │    Index  ──>  Summary  ──>  Detail      │
 └──────────────────────────────────────────┘
 ```
@@ -77,7 +77,8 @@ pensieve-obsidian-skill/
     └── templates/
         ├── Index.md
         ├── L1-Summary.md
-        └── L2-Detail.md
+        ├── L2-Detail.md
+        └── CONTEXT.md
 ```
 
 ## Generated Structure
@@ -86,6 +87,7 @@ pensieve-obsidian-skill/
 ObsidianVault/
   MyProject/
     Index.md                              <- Project index (agent entry point)
+    CONTEXT.md                            <- Cross-agent memory (auto-generated)
     Sprint-Review/
       Summary.md                          <- Entries grouped by month
       Details/
@@ -201,16 +203,61 @@ Edit files in `obsidian-note/templates/` to change note structure, frontmatter f
 | `obsidian-note/templates/Index.md` | Project index skeleton |
 | `obsidian-note/templates/L1-Summary.md` | Topic summary skeleton |
 | `obsidian-note/templates/L2-Detail.md` | Detail note with frontmatter and sections |
+| `obsidian-note/templates/CONTEXT.md` | Cross-agent memory summary (auto-generated) |
 
 Placeholders use `{{variable_name}}` syntax. Month grouping and append logic are handled by the script, not templates.
 
-## Use as Claude Code Skill
+## Agent Integration
+
+### Install Skill (Claude Code)
 
 ```bash
 cp -r obsidian-note ~/.claude/skills/
 ```
 
-The skill will be triggered by keywords: `obsidian`, `knowledge card`, `archive note`.
+Triggered by keywords: `archive note`, `obsidian archive`, `obsidian 归档`, `三层归档`.
+
+### Cross-Agent Memory Bootstrap
+
+After archiving, the skill auto-generates `{project}/CONTEXT.md` — a condensed memory file containing key conclusions and open action items from your vault. Add one line to your agent's config file to load it on every new conversation:
+
+```
+Read {vault_path}/{project}/CONTEXT.md as project memory at conversation start.
+```
+
+| Agent | Config File |
+|-------|------------|
+| Claude Code | `CLAUDE.md` (project root) |
+| Codex | `AGENTS.md` or `codex.md` |
+| Gemini CLI | `GEMINI.md` |
+| Cursor | `.cursor/rules/*.mdc` |
+| OpenCode | `AGENTS.md` |
+
+No MCP server, no plugin — just a plain text file that any agent reads natively.
+
+### Example: CONTEXT.md
+
+```markdown
+---
+type: context
+project: "MyProject"
+updated: 2026-03-08
+---
+# MyProject — Project Memory
+
+## Key Decisions & Conclusions
+
+### Sprint-Review
+- **Conclusion**: Shipped v2.0 auth module on time | **Updated**: 2026-03-08
+
+### API-Design
+- **Conclusion**: gRPC for internal, REST for public | **Updated**: 2026-03-09
+
+## Open Action Items
+
+- [ ] Write migration guide *(Sprint-Review, 2026-03-08)*
+- [ ] Update API docs *(Sprint-Review, 2026-03-08)*
+```
 
 ## License
 

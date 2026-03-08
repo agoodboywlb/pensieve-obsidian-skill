@@ -18,6 +18,7 @@ triggers:
 ```
 vault/{project}/
 ├── Index.md                         <- Project index (agent reads this first)
+├── CONTEXT.md                       <- Cross-agent memory file (auto-generated)
 └── {topic}/
     ├── Summary.md                   <- Entries grouped by month, newest first
     └── Details/
@@ -46,8 +47,31 @@ Templates in `templates/` can be freely customized:
 - `templates/Index.md` — Project index
 - `templates/L1-Summary.md` — Topic summary
 - `templates/L2-Detail.md` — Detail note
+- `templates/CONTEXT.md` — Cross-agent memory summary
 
-## 4. Usage Example
+## 4. Cross-Agent Memory: CONTEXT.md
+
+After each archive operation, the skill **auto-generates** `{project}/CONTEXT.md` — a condensed memory file distilled from `Index.md`.
+
+### What goes into CONTEXT.md
+- Each topic's **latest conclusion** and **date** (one line per topic)
+- **Open action items** collected from the most recent Detail of each topic
+- Total ≤ 150 lines to fit agent context limits
+
+### How agents consume it
+Add one bootstrap line to the agent's config file, pointing to the vault's CONTEXT.md:
+
+| Agent | Config File | Bootstrap Line |
+|-------|------------|----------------|
+| Claude Code | `CLAUDE.md` | `Read {vault}/{project}/CONTEXT.md as project memory at conversation start.` |
+| Codex | `AGENTS.md` or `codex.md` | Same content |
+| Gemini CLI | `GEMINI.md` | Same content |
+| Cursor | `.cursor/rules/*.mdc` | Same content |
+| OpenCode | `AGENTS.md` | Same content |
+
+This makes archived knowledge available to **any agent** on first message — no MCP, no plugin, no extra setup.
+
+## 5. Usage Example
 
 ```bash
 export OBSIDIAN_VAULT=~/ObsidianVault
