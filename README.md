@@ -60,6 +60,8 @@ Then use trigger keywords in your conversation:
 
 The agent will follow SKILL.md to generate Index / Summary / Detail files automatically.
 
+**Want other agents (Codex, Gemini, Cursor) to share this knowledge?** See [Cross-Agent Memory Bootstrap](#cross-agent-memory-bootstrap) to enable memory loading on conversation start.
+
 ## Project Structure
 
 ```

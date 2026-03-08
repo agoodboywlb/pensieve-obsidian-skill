@@ -60,6 +60,8 @@ export OBSIDIAN_VAULT=~/ObsidianVault
 
 Agent 会按照 SKILL.md 的指引自动生成 Index / Summary / Detail 文件。
 
+**希望其他 Agent（Codex、Gemini、Cursor）也能共享这些知识？** 参见 [跨 Agent 记忆引导](#跨-agent-记忆引导)，一行配置即可在新对话时自动加载记忆。
+
 ## 项目结构
 
 ```
