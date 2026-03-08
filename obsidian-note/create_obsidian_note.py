@@ -21,7 +21,8 @@ def _block_ref_id(topic, date_str):
     """Generate a globally unique block reference ID."""
     raw = f"{topic}-{date_str}-{os.getpid()}-{datetime.datetime.now().timestamp()}"
     short_hash = hashlib.md5(raw.encode()).hexdigest()[:6]
-    return f"^{topic}-{date_str}-{short_hash}"
+    safe_topic = re.sub(r"[^a-zA-Z0-9_-]", "-", topic)
+    return f"^{safe_topic}-{date_str}-{short_hash}"
 
 
 def _resolve_vault(cli_vault):
@@ -47,8 +48,12 @@ def _unique_detail_filename(details_dir, topic, date_str):
 def _update_frontmatter_date(content, date_str):
     """Update 'updated:' field in YAML frontmatter."""
     lines = content.split("\n")
+    in_fm = False
     for i, line in enumerate(lines):
-        if line.startswith("updated:"):
+        if line.strip() == "---":
+            in_fm = not in_fm
+            continue
+        if in_fm and line.startswith("updated:"):
             lines[i] = f"updated: {date_str}"
             break
     return "\n".join(lines)
@@ -70,21 +75,13 @@ def _upsert_index(index_path, project_name, topic, task_type, conclusion, date_s
         content = _update_frontmatter_date(content, date_str)
 
         if f"### {topic}\n" in content:
+            # Delete old topic block (from ### {topic} to next ### or EOF), then append new
             pattern = re.compile(
-                rf"### {re.escape(topic)}\n"
-                rf"- \*\*Type\*\*:.*\n"
-                rf"- \*\*Conclusion\*\*:.*\n"
-                rf"- \*\*Link\*\*:.*\n"
+                rf"(\n?)### {re.escape(topic)}\n(?:(?!### ).+\n)*"
             )
-            content = pattern.sub(
-                f"### {topic}\n"
-                f"- **Type**: {task_type} | **Updated**: {date_str}\n"
-                f"- **Conclusion**: {conclusion}\n"
-                f"- **Link**: [[{topic}/Summary]]\n",
-                content,
-            )
-        else:
-            content = content.rstrip() + topic_block
+            content = pattern.sub("", content)
+
+        content = content.rstrip() + topic_block
 
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(content)
@@ -157,9 +154,11 @@ def create_obsidian_note(vault_path, project_name, topic, summary_data, detail_d
         {vault}/{project}/{topic}/Summary.md
         {vault}/{project}/{topic}/Details/{topic}-{date}.md
     """
-    assert "conclusion" in summary_data, "summary_data must contain 'conclusion'"
+    if "conclusion" not in summary_data:
+        raise ValueError("summary_data must contain 'conclusion'")
     for key in ("outcomes", "analysis", "todos"):
-        assert key in detail_data, f"detail_data must contain '{key}'"
+        if key not in detail_data:
+            raise ValueError(f"detail_data must contain '{key}'")
 
     project_dir = os.path.join(vault_path, project_name)
     topic_dir = os.path.join(project_dir, topic)
@@ -201,10 +200,16 @@ def create_obsidian_note(vault_path, project_name, topic, summary_data, detail_d
         summary_data["conclusion"], date_str,
     )
 
+    paths = {
+        "index": index_path,
+        "summary": summary_path,
+        "detail": os.path.join(details_dir, filename),
+    }
     print(f"Notes generated at: {project_dir}")
     print(f"  Index:   Index.md")
     print(f"  Summary: {topic}/Summary.md")
     print(f"  Detail:  {topic}/Details/{filename}")
+    return paths
 
 
 if __name__ == "__main__":
