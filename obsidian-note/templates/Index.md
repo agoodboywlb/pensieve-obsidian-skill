@@ -7,3 +7,6 @@ updated: {{current_date}}
 
 ## Topics
 {{topic_entry}}
+
+## Open Action Items
+{{open_todos}}

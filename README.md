@@ -38,6 +38,7 @@ In practice: after a deep debugging session, one agent archives its findings. Da
 - **Same-day collision safe**: auto-increments filename (`topic-date-2.md`, `-3.md`, ...)
 - **Agent-friendly Index**: each topic shows type/conclusion/date for quick retrieval
 - **Customizable templates**: edit `obsidian-note/templates/*.md` to match your vault style
+- **Cross-agent memory**: Index.md doubles as memory file — any agent (Codex, Gemini, Cursor) can bootstrap from it
 - **Zero dependencies**: Python 3.6+ standard library only
 
 ## Quick Start
