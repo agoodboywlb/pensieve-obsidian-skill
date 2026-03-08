@@ -59,6 +59,61 @@ def _update_frontmatter_date(content, date_str):
     return "\n".join(lines)
 
 
+def _collect_open_todos(project_dir):
+    """Scan each topic's latest Detail file, collect uncompleted '- [ ]' items."""
+    todos = []
+    if not os.path.isdir(project_dir):
+        return todos
+    for entry in sorted(os.listdir(project_dir)):
+        topic_dir = os.path.join(project_dir, entry)
+        details_dir = os.path.join(topic_dir, "Details")
+        if not os.path.isdir(details_dir):
+            continue
+        # Find latest Detail file by name (lexicographic sort = chronological)
+        detail_files = sorted(
+            [f for f in os.listdir(details_dir) if f.endswith(".md")],
+            reverse=True,
+        )
+        if not detail_files:
+            continue
+        latest = os.path.join(details_dir, detail_files[0])
+        with open(latest, "r", encoding="utf-8") as f:
+            content = f.read()
+        # Extract date from frontmatter
+        date_match = re.search(r"^created:\s*(.+)$", content, re.MULTILINE)
+        date_label = date_match.group(1).strip() if date_match else "unknown"
+        # Extract uncompleted todos from ## Action Items section
+        in_action = False
+        for line in content.split("\n"):
+            if line.startswith("## Action Items"):
+                in_action = True
+                continue
+            if in_action and line.startswith("## "):
+                break
+            if in_action and line.strip().startswith("- [ ]"):
+                item = line.strip()
+                todos.append(f"{item} *({entry}, {date_label})*")
+    return todos
+
+
+def _update_index_todos(content, project_dir):
+    """Replace or append ## Open Action Items section in Index content."""
+    todos = _collect_open_todos(project_dir)
+    todos_block = "\n## Open Action Items\n\n"
+    if todos:
+        todos_block += "\n".join(todos) + "\n"
+    else:
+        todos_block += "*No open items.*\n"
+
+    # Replace existing section or append
+    pattern = re.compile(r"\n## Open Action Items\n[\s\S]*$")
+    if pattern.search(content):
+        content = pattern.sub(todos_block, content)
+    else:
+        content = content.rstrip() + "\n" + todos_block
+    return content
+
+
 def _upsert_index(index_path, project_name, topic, task_type, conclusion, date_str):
     """Create or update project Index — each topic shows latest metadata for quick retrieval."""
     topic_block = (
@@ -74,6 +129,10 @@ def _upsert_index(index_path, project_name, topic, task_type, conclusion, date_s
 
         content = _update_frontmatter_date(content, date_str)
 
+        # Strip existing Open Action Items before topic manipulation
+        todo_pattern = re.compile(r"\n## Open Action Items\n[\s\S]*$")
+        content = todo_pattern.sub("", content)
+
         if f"### {topic}\n" in content:
             # Delete old topic block (from ### {topic} to next ### or EOF), then append new
             pattern = re.compile(
@@ -82,6 +141,10 @@ def _upsert_index(index_path, project_name, topic, task_type, conclusion, date_s
             content = pattern.sub("", content)
 
         content = content.rstrip() + topic_block
+
+        # Re-aggregate Open Action Items
+        project_dir = os.path.dirname(index_path)
+        content = _update_index_todos(content, project_dir)
 
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(content)
@@ -92,7 +155,12 @@ def _upsert_index(index_path, project_name, topic, task_type, conclusion, date_s
             .replace("{{project_name}}", project_name)
             .replace("{{current_date}}", date_str)
             .replace("{{topic_entry}}", topic_block)
+            .replace("{{open_todos}}", "")
         )
+        # Aggregate todos (Detail is already written at this point)
+        project_dir = os.path.dirname(index_path)
+        content = _update_index_todos(content, project_dir)
+
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(content)
 
@@ -179,9 +247,9 @@ def create_obsidian_note(vault_path, project_name, topic, summary_data, detail_d
         .replace("{{task_type}}", task_type)
         .replace("{{current_date}}", date_str)
         .replace("{{block_ref_id}}", block_ref)
-        .replace("{{bullet_points_of_outcomes}}", detail_data["outcomes"])
-        .replace("{{detailed_analysis}}", detail_data["analysis"])
-        .replace("{{todos}}", detail_data["todos"])
+        .replace("{{bullet_points_of_outcomes}}", detail_data["outcomes"].replace("\\n", "\n"))
+        .replace("{{detailed_analysis}}", detail_data["analysis"].replace("\\n", "\n"))
+        .replace("{{todos}}", detail_data["todos"].replace("\\n", "\n"))
     )
     with open(os.path.join(details_dir, filename), "w", encoding="utf-8") as f:
         f.write(detail_content)
