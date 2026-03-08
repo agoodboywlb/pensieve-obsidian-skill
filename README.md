@@ -50,19 +50,15 @@ cd pensieve-obsidian-skill
 # 2. Install skill (copy to Claude Code skills path)
 cp -r obsidian-note ~/.claude/skills/
 
-# 3. Set your vault path (recommended)
+# 3. Set your vault path
 export OBSIDIAN_VAULT=~/ObsidianVault
-
-# 4. Run
-python obsidian-note/create_obsidian_note.py \
-  --project MyProject \
-  --topic Sprint-Review \
-  --task-type meeting \
-  --conclusion "Shipped v2.0 auth module on time" \
-  --outcomes "- OAuth2 PKCE flow implemented\n- Token refresh tested" \
-  --analysis "Compared session vs JWT, chose JWT for stateless scaling..." \
-  --todos "- [ ] Write migration guide\n- [ ] Update API docs"
 ```
+
+Then use trigger keywords in your conversation:
+
+> "archive note: Sprint-Review meeting — shipped v2.0 auth module on time"
+
+The agent will follow SKILL.md to generate Index / Summary / Detail files automatically.
 
 ## Project Structure
 
@@ -219,10 +215,13 @@ Triggered by keywords: `archive note`, `obsidian archive`, `obsidian 归档`, `�
 
 ### Cross-Agent Memory Bootstrap
 
-After archiving, the skill auto-generates `{project}/CONTEXT.md` — a condensed memory file containing key conclusions and open action items from your vault. Add one line to your agent's config file to load it on every new conversation:
+After archiving, the skill auto-generates `{project}/CONTEXT.md` — a condensed memory file containing key conclusions and open action items from your vault. Add the following bootstrap block to your agent's config file:
 
 ```
-Read {vault_path}/{project}/CONTEXT.md as project memory at conversation start.
+# Project Memory Guide
+1. **Bootstrap**: Always `cat {vault_path}/{project}/CONTEXT.md` at the start of a session.
+2. **Knowledge Retrieval**: Use CONTEXT.md as the map to find relevant Summary/Detail files.
+3. **Task Alignment**: Sync current progress with "Open Action Items" in CONTEXT.md.
 ```
 
 | Agent | Config File |

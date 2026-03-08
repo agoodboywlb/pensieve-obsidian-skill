@@ -59,15 +59,22 @@ After each archive operation, the skill **auto-generates** `{project}/CONTEXT.md
 - Total ≤ 150 lines to fit agent context limits
 
 ### How agents consume it
-Add one bootstrap line to the agent's config file, pointing to the vault's CONTEXT.md:
+Add the following bootstrap block to the agent's config file:
 
-| Agent | Config File | Bootstrap Line |
-|-------|------------|----------------|
-| Claude Code | `CLAUDE.md` | `Read {vault}/{project}/CONTEXT.md as project memory at conversation start.` |
-| Codex | `AGENTS.md` or `codex.md` | Same content |
-| Gemini CLI | `GEMINI.md` | Same content |
-| Cursor | `.cursor/rules/*.mdc` | Same content |
-| OpenCode | `AGENTS.md` | Same content |
+```
+# Project Memory Guide
+1. **Bootstrap**: Always `cat {vault}/{project}/CONTEXT.md` at the start of a session.
+2. **Knowledge Retrieval**: Use CONTEXT.md as the map to find relevant Summary/Detail files.
+3. **Task Alignment**: Sync current progress with "Open Action Items" in CONTEXT.md.
+```
+
+| Agent | Config File |
+|-------|------------|
+| Claude Code | `CLAUDE.md` (project root) |
+| Codex | `AGENTS.md` or `codex.md` |
+| Gemini CLI | `GEMINI.md` |
+| Cursor | `.cursor/rules/*.mdc` |
+| OpenCode | `AGENTS.md` |
 
 This makes archived knowledge available to **any agent** on first message — no MCP, no plugin, no extra setup.
 

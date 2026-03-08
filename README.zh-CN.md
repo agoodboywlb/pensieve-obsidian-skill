@@ -50,19 +50,15 @@ cd pensieve-obsidian-skill
 # 2. 安装 Skill（复制到 Claude Code skills 路径）
 cp -r obsidian-note ~/.claude/skills/
 
-# 3. 设置 vault 路径（推荐）
+# 3. 设置 vault 路径
 export OBSIDIAN_VAULT=~/ObsidianVault
-
-# 4. 运行
-python obsidian-note/create_obsidian_note.py \
-  --project MyProject \
-  --topic Sprint-Review \
-  --task-type meeting \
-  --conclusion "v2.0 认证模块按时交付" \
-  --outcomes "- OAuth2 PKCE 流程已实现\n- Token 刷新已测试" \
-  --analysis "对比了 session 与 JWT，选择 JWT 以支持无状态扩展..." \
-  --todos "- [ ] 编写迁移指南\n- [ ] 更新 API 文档"
 ```
+
+然后在对话中使用触发关键词：
+
+> "archive note：Sprint-Review 会议 —— v2.0 认证模块按时交付"
+
+Agent 会按照 SKILL.md 的指引自动生成 Index / Summary / Detail 文件。
 
 ## 项目结构
 
@@ -219,10 +215,13 @@ cp -r obsidian-note ~/.claude/skills/
 
 ### 跨 Agent 记忆引导
 
-归档后，skill 自动生成 `{project}/CONTEXT.md` —— 一份精炼的记忆文件，包含 vault 中的关键结论和待办事项。在 agent 的配置文件中加入一行，即可在每次新对话时自动加载：
+归档后，skill 自动生成 `{project}/CONTEXT.md` —— 一份精炼的记忆文件，包含 vault 中的关键结论和待办事项。在 agent 的配置文件中加入以下 bootstrap 块：
 
 ```
-Read {vault_path}/{project}/CONTEXT.md as project memory at conversation start.
+# Project Memory Guide
+1. **Bootstrap**: 每次新对话启动时，先读取 `cat {vault_path}/{project}/CONTEXT.md`。
+2. **Knowledge Retrieval**: 以 CONTEXT.md 为地图，按需定位 Summary/Detail 文件。
+3. **Task Alignment**: 对齐 CONTEXT.md 中的 "Open Action Items"，同步当前进度。
 ```
 
 | Agent | 配置文件 |
