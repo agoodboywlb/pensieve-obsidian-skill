@@ -5,9 +5,10 @@ description: >
   Generates three-layer structure: Index -> Summary -> Detail.
   Always appends, never overwrites.
 triggers:
-  - obsidian
-  - knowledge card
   - archive note
+  - obsidian archive
+  - obsidian 归档
+  - 三层归档
 ---
 
 # Role: Obsidian Knowledge Architect
