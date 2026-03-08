@@ -60,7 +60,7 @@ export OBSIDIAN_VAULT=~/ObsidianVault
 
 Agent 会按照 SKILL.md 的指引自动生成 Index / Summary / Detail 文件。
 
-**希望其他 Agent（Codex、Gemini、Cursor）也能共享这些知识？** 参见 [跨 Agent 记忆引导](#跨-agent-记忆引导)，一行配置即可在新对话时自动加载记忆。
+**希望其他 Agent（Codex、Gemini、Cursor）也能共享这些知识？** 参见 [跨 Agent 记忆引导](#跨-agent-记忆引导)，只需将它们指向 Index.md。
 
 ## 项目结构
 
@@ -75,8 +75,7 @@ pensieve-obsidian-skill/
     └── templates/
         ├── Index.md
         ├── L1-Summary.md
-        ├── L2-Detail.md
-        └── CONTEXT.md
+        └── L2-Detail.md
 ```
 
 ## 生成结构
@@ -84,8 +83,7 @@ pensieve-obsidian-skill/
 ```
 ObsidianVault/
   MyProject/
-    Index.md                              <- 项目索引（agent 检索入口）
-    CONTEXT.md                            <- 跨 Agent 记忆文件（自动生成）
+    Index.md                              <- 项目索引 + 跨 Agent 记忆（agent 检索入口）
     Sprint-Review/
       Summary.md                          <- 按月分组的摘要条目
       Details/
@@ -122,6 +120,11 @@ updated: 2026-03-08
 - **Type**: decision | **Updated**: 2026-03-09
 - **Conclusion**: 内部用 gRPC，外部用 REST
 - **Link**: [[API-Design/Summary]]
+
+## Open Action Items
+
+- [ ] 编写迁移指南 *(Sprint-Review, 2026-03-08)*
+- [ ] 更新 API 文档 *(Sprint-Review, 2026-03-08)*
 ```
 
 ### Summary.md — 主题级，按月分组
@@ -201,7 +204,6 @@ Agent（如 Claude Code）可通过 1-3 次文件读取定位内容：
 | `obsidian-note/templates/Index.md` | 项目索引骨架 |
 | `obsidian-note/templates/L1-Summary.md` | 主题摘要骨架 |
 | `obsidian-note/templates/L2-Detail.md` | 详情笔记（含 frontmatter 和章节） |
-| `obsidian-note/templates/CONTEXT.md` | 跨 Agent 记忆摘要（自动生成） |
 
 占位符使用 `{{variable_name}}` 语法。月份分组和追加逻辑由脚本处理，不在模板中。
 
@@ -217,13 +219,13 @@ cp -r obsidian-note ~/.claude/skills/
 
 ### 跨 Agent 记忆引导
 
-归档后，skill 自动生成 `{project}/CONTEXT.md` —— 一份精炼的记忆文件，包含 vault 中的关键结论和待办事项。在 agent 的配置文件中加入以下 bootstrap 块：
+`Index.md` 同时充当项目地图和跨 Agent 记忆文件。在 agent 的配置文件中加入以下 bootstrap 块，即可在每次新对话时自动加载：
 
 ```
 # Project Memory Guide
-1. **Bootstrap**: 每次新对话启动时，先读取 `cat {vault_path}/{project}/CONTEXT.md`。
-2. **Knowledge Retrieval**: 以 CONTEXT.md 为地图，按需定位 Summary/Detail 文件。
-3. **Task Alignment**: 对齐 CONTEXT.md 中的 "Open Action Items"，同步当前进度。
+1. **Bootstrap**: 每次新对话启动时，先读取 `cat {vault_path}/{project}/Index.md`。
+2. **Knowledge Retrieval**: 以 Index.md 为地图，按需定位 Summary/Detail 文件。
+3. **Task Alignment**: 对齐 Index.md 中的 "Open Action Items"，同步当前进度。
 ```
 
 | Agent | 配置文件 |
@@ -235,30 +237,6 @@ cp -r obsidian-note ~/.claude/skills/
 | OpenCode | `AGENTS.md` |
 
 无需 MCP Server、无需插件 —— 只是一个纯文本文件，任何 agent 都能原生读取。
-
-### CONTEXT.md 示例
-
-```markdown
----
-type: context
-project: "MyProject"
-updated: 2026-03-08
----
-# MyProject — Project Memory
-
-## Key Decisions & Conclusions
-
-### Sprint-Review
-- **Conclusion**: v2.0 认证模块按时交付 | **Updated**: 2026-03-08
-
-### API-Design
-- **Conclusion**: 内部用 gRPC，外部用 REST | **Updated**: 2026-03-09
-
-## Open Action Items
-
-- [ ] 编写迁移指南 *(Sprint-Review, 2026-03-08)*
-- [ ] 更新 API 文档 *(Sprint-Review, 2026-03-08)*
-```
 
 ## 许可证
 

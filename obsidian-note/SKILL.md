@@ -17,8 +17,7 @@ triggers:
 
 ```
 vault/{project}/
-├── Index.md                         <- Project index (agent reads this first)
-├── CONTEXT.md                       <- Cross-agent memory file (auto-generated)
+├── Index.md                         <- Project index + cross-agent memory (agent reads this first)
 └── {topic}/
     ├── Summary.md                   <- Entries grouped by month, newest first
     └── Details/
@@ -33,7 +32,7 @@ Agent retrieval flow: read `Index.md` -> locate topic by type/conclusion -> dril
 
 - **Detail**: always creates a new file (same-day: `-2`, `-3`, ...)
 - **Summary**: always appends entry under month group, never skips similar content
-- **Index**: updates topic metadata (latest conclusion/date) for quick scanning; history preserved in Summary
+- **Index**: updates topic metadata (latest conclusion/date) and aggregates open action items for quick scanning; history preserved in Summary
 
 ## 3. Configuration
 
@@ -47,11 +46,7 @@ Templates in `templates/` can be freely customized:
 - `templates/Index.md` — Project index
 - `templates/L1-Summary.md` — Topic summary
 - `templates/L2-Detail.md` — Detail note
-- `templates/CONTEXT.md` — Cross-agent memory summary
 
-## 4. Cross-Agent Memory: CONTEXT.md
+## 4. Cross-Agent Memory
 
-After each archive operation, **auto-generate** `{project}/CONTEXT.md` — a condensed memory file distilled from `Index.md`:
-- Each topic's **latest conclusion** and **date** (one line per topic)
-- **Open action items** collected from the most recent Detail of each topic
-- Total ≤ 150 lines to fit agent context limits
+Index.md doubles as the cross-agent memory file. After each archive, append an `## Open Action Items` section at the bottom of Index.md, aggregating uncompleted todos from the latest Detail of each topic. Any agent can read Index.md to get both the knowledge map and pending tasks in a single file read.

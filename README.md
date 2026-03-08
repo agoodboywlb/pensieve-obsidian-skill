@@ -60,7 +60,7 @@ Then use trigger keywords in your conversation:
 
 The agent will follow SKILL.md to generate Index / Summary / Detail files automatically.
 
-**Want other agents (Codex, Gemini, Cursor) to share this knowledge?** See [Cross-Agent Memory Bootstrap](#cross-agent-memory-bootstrap) to enable memory loading on conversation start.
+**Want other agents (Codex, Gemini, Cursor) to share this knowledge?** See [Cross-Agent Memory Bootstrap](#cross-agent-memory-bootstrap) — just point them to Index.md.
 
 ## Project Structure
 
@@ -75,8 +75,7 @@ pensieve-obsidian-skill/
     └── templates/
         ├── Index.md
         ├── L1-Summary.md
-        ├── L2-Detail.md
-        └── CONTEXT.md
+        └── L2-Detail.md
 ```
 
 ## Generated Structure
@@ -84,8 +83,7 @@ pensieve-obsidian-skill/
 ```
 ObsidianVault/
   MyProject/
-    Index.md                              <- Project index (agent entry point)
-    CONTEXT.md                            <- Cross-agent memory (auto-generated)
+    Index.md                              <- Project index + cross-agent memory (agent entry point)
     Sprint-Review/
       Summary.md                          <- Entries grouped by month
       Details/
@@ -122,6 +120,11 @@ updated: 2026-03-08
 - **Type**: decision | **Updated**: 2026-03-09
 - **Conclusion**: gRPC for internal, REST for public
 - **Link**: [[API-Design/Summary]]
+
+## Open Action Items
+
+- [ ] Write migration guide *(Sprint-Review, 2026-03-08)*
+- [ ] Update API docs *(Sprint-Review, 2026-03-08)*
 ```
 
 ### Summary.md — Topic-level, grouped by month
@@ -201,7 +204,6 @@ Edit files in `obsidian-note/templates/` to change note structure, frontmatter f
 | `obsidian-note/templates/Index.md` | Project index skeleton |
 | `obsidian-note/templates/L1-Summary.md` | Topic summary skeleton |
 | `obsidian-note/templates/L2-Detail.md` | Detail note with frontmatter and sections |
-| `obsidian-note/templates/CONTEXT.md` | Cross-agent memory summary (auto-generated) |
 
 Placeholders use `{{variable_name}}` syntax. Month grouping and append logic are handled by the script, not templates.
 
@@ -217,13 +219,13 @@ Triggered by keywords: `archive note`, `obsidian archive`, `obsidian 归档`, `�
 
 ### Cross-Agent Memory Bootstrap
 
-After archiving, the skill auto-generates `{project}/CONTEXT.md` — a condensed memory file containing key conclusions and open action items from your vault. Add the following bootstrap block to your agent's config file:
+`Index.md` serves as both the project map and cross-agent memory file. Add the following bootstrap block to your agent's config file to load it on every new conversation:
 
 ```
 # Project Memory Guide
-1. **Bootstrap**: Always `cat {vault_path}/{project}/CONTEXT.md` at the start of a session.
-2. **Knowledge Retrieval**: Use CONTEXT.md as the map to find relevant Summary/Detail files.
-3. **Task Alignment**: Sync current progress with "Open Action Items" in CONTEXT.md.
+1. **Bootstrap**: Always `cat {vault_path}/{project}/Index.md` at the start of a session.
+2. **Knowledge Retrieval**: Use Index.md as the map to find relevant Summary/Detail files.
+3. **Task Alignment**: Sync current progress with "Open Action Items" in Index.md.
 ```
 
 | Agent | Config File |
@@ -235,30 +237,6 @@ After archiving, the skill auto-generates `{project}/CONTEXT.md` — a condensed
 | OpenCode | `AGENTS.md` |
 
 No MCP server, no plugin — just a plain text file that any agent reads natively.
-
-### Example: CONTEXT.md
-
-```markdown
----
-type: context
-project: "MyProject"
-updated: 2026-03-08
----
-# MyProject — Project Memory
-
-## Key Decisions & Conclusions
-
-### Sprint-Review
-- **Conclusion**: Shipped v2.0 auth module on time | **Updated**: 2026-03-08
-
-### API-Design
-- **Conclusion**: gRPC for internal, REST for public | **Updated**: 2026-03-09
-
-## Open Action Items
-
-- [ ] Write migration guide *(Sprint-Review, 2026-03-08)*
-- [ ] Update API docs *(Sprint-Review, 2026-03-08)*
-```
 
 ## License
 
